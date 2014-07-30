@@ -255,13 +255,12 @@ def questcheck(s,t):
             print time.strftime('%H:%M:%S') + questType + 'URGENT QUEST [' + eventDisplay +'] IS STARTING AT ' + datetime.strftime(eventLocalTime , '%H:%M')
         elif eventType == 'P' :
             print time.strftime('%H:%M:%S') + questType + 'URGENT EVENT OF [' + eventDisplay +'] IS STARTING AT ' + datetime.strftime(eventLocalTime , '%H:%M')
-            if t =='raw' :
+            if s[0] =='raw' :
                 print time.strftime('%H:%M:%S') + ' INCLUDE URGENT QUEST :' + eventDetail
         elif eventType == 'IR' :
             print time.strftime('%H:%M:%S') + ' INTERRUPT RANKING IS STARTING AT ' + datetime.strftime(eventLocalTime , '%H:%M')
             if t == 'pre' :
                 print time.strftime('%H:%M:%S') + ' TARGET:' + eventData[2].decode('utf-8')
-        print ''
     else :
         print 'f(questcheck): unknow string'
         return
@@ -579,6 +578,7 @@ def main(t):
                 ss = ( preTime.hour - now.hour + 1 ) *3600 - now.minute * 60 - now.second - (ticPlaysound - tocPlaysound)
             else :
                 ss = ssInt + 3600
+                print ''
         else:
             mainraw = raw(t)
             if mainraw[0] == 'newevent':
@@ -596,6 +596,7 @@ def main(t):
                     ss = ( rawTime.hour - now.hour + 1 ) *3600 - now.minute * 60 - now.second - (ticPlaysound - tocPlaysound)
                 else:
                     ss = ( ssInt + 3600)
+                print ''
             else :
                 if t == 'start' :
                     print time.strftime('%H:%M:%S') + ' NO EVENT FOUND'                    
