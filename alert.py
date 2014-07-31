@@ -73,10 +73,10 @@ else :
 ctypes.windll.kernel32.SetConsoleTitleA("PSO2 Urgent Quest Alert")
 url = "http://pso2.swiki.jp/index.php?%E7%B7%8A%E6%80%A5%E6%8E%B2%E7%A4%BA%E6%9D%BF%2FShip" + shipSetting
 if shipSetting > 5:
-    preloadurl = 'http://localhost/preload1.html'
+    preloadurl = 'http://dhranime.net/pso2/pre/1.html'
 else :
-    preloadurl = 'http://localhost/preload2.html'
-sysurl = 'http://localhost/sys.html'
+    preloadurl = 'http://dhranime.net/pso2/pre/2.html'
+sysurl = 'http://dhranime.net/pso2/sys/0_22.html'
 user_agent = 'Mozilla/5.0 (Windows; U; MSIE 9.0; Windows NT 9.0);'
 headers = { 'User-Agent' : user_agent }
 reqRaw = urllib2.Request(url,'', headers)
@@ -88,7 +88,7 @@ filename = 'data1.dat'
 preloadfile = 'data2.dat'
 print '===================================================='
 print '             PSO2 URGENT QUEST ALERT\n'
-print 'Version:0.21'
+print 'Version:0.22'
 print 'Local Time Zone: UTC' + timezone
 print 'Game Server: ' + shipSetting
 print '\n===================================================='
@@ -132,8 +132,8 @@ def questcheck(s,t):
     if t != 'get':
         eventList = []
         eventItemFalse = re.search('無|ちん|沈|平和|なし|ありません',s)
-        eventItemDF = re.search('エル|巨躯',s)
-        eventItemLoser = re.search('歯医者|ルーサー|敗者',s)
+        eventItemDF = re.search('エル|巨躯|DFE',s)
+        eventItemLoser = re.search('歯医者|ルーサー|敗者|DFL',s)
         eventItemRiripaBase1 = re.search('襲来|第一|１',s)
         eventItemRiripaBase2 = re.search('侵入|第二|２',s)
         eventItemRiripaBase3 = re.search('絶望|第三|３',s)
@@ -189,9 +189,9 @@ def questcheck(s,t):
     elif event == 'dk2' :
         eventReturn = 'TRUE' ;eventType = 'DK' ;eventCode = 'dk2'; eventDisplay = 'The Beckoning Darkness'
     elif event == 'naberius' :
-        eventReturn = 'TRUE' ;eventType = 'P' ;eventCode = 'naberius'; eventDisplay = 'Naberius'; eventDetail = '"The Oncoming Darkness"'
+        eventReturn = 'TRUE' ;eventType = 'P' ;eventCode = 'naberius'; eventDisplay = 'Naberius'; eventDetail = '"Subdue Fang Banther"'
     elif event == 'naberius1' :
-        eventReturn = 'TRUE' ;eventType = 'PS' ;eventCode = 'naberius1'; eventDisplay = 'The Oncoming Darkness';
+        eventReturn = 'TRUE' ;eventType = 'PS' ;eventCode = 'naberius1'; eventDisplay = 'Subdue Fang Banther';
     elif event == 'amduscia' :
         eventReturn = 'TRUE' ;eventType = 'P' ;eventCode = 'amduscia'; eventDisplay = 'Amduscia';eventDetail = '"Volcanic Guerillas", "Rampaging Malice"'
     elif event == 'amduscia1' :
@@ -201,7 +201,7 @@ def questcheck(s,t):
     elif event == 'lilipa' :
         eventReturn = 'TRUE' ;eventType = 'P' ;eventCode = 'lilipa'; eventDisplay = 'Lilipa';eventDetail = '"Desert Guerillas", "Mega Mecha Awakening", "Lead Border-Breaker"'
     elif event == 'lilipa1' :
-        eventReturn = 'TRUE' ;eventType = 'PS' ;eventCode = 'lilipa1'; eventDisplay = 'Desert Guerrilla Warfare'
+        eventReturn = 'TRUE' ;eventType = 'PS' ;eventCode = 'lilipa1'; eventDisplay = 'Desert Guerillas'
     elif event == 'lilipa2' :
         eventReturn = 'TRUE' ;eventType = 'PS' ;eventCode = 'lilipa2'; eventDisplay = 'Mega Mech Awakening'
     elif event == 'lilipa3' :
@@ -244,13 +244,14 @@ def questcheck(s,t):
             return False
     elif t =='get' :
         if s[0] =='pre':
-            questType = ' ANNOUNCED'
+            questType = ' ANNOUNCED '
         elif s[0] == 'raw' :
             questType = ' '
         eventLocalTime = localtime(eventData[0])
         print ''
         if eventType == 'DF' :
-            print time.strftime('%H:%M:%S') + questType + 'URGENT QUEST OF APPROACHING [' + eventDisplay +'] IS STARTING AT ' + datetime.strftime(eventLocalTime , '%H:%M')
+            print time.strftime('%H:%M:%S') + questType + ' URGENT QUEST IS STARTING AT ' + datetime.strftime(eventLocalTime , '%H:%M')
+            print time.strftime('%H:%M:%S') + ' TARGET: APPROACHING [' + eventDisplay +']'
         elif eventType == 'TD' or eventType == 'DK' or eventType =='PS' :
             print time.strftime('%H:%M:%S') + questType + 'URGENT QUEST [' + eventDisplay +'] IS STARTING AT ' + datetime.strftime(eventLocalTime , '%H:%M')
         elif eventType == 'P' :
@@ -268,7 +269,18 @@ def questcheck(s,t):
 #Check Event Function: eventcheck(s,t)
 #return list of information of urgent quest
 def netrequest():
-    web = urllib2.urlopen(reqRaw)
+    try:
+        web = urllib2.urlopen(reqRaw)
+    except urllib2.HTTPError as e:
+        print time.strftime('%H:%M:%S') + ' ERROR ' + str(e.code)
+        print time.strftime('%H:%M:%S') + ' ERROR: failed to connect with server'
+        raw_input('Press Enter to retry')
+        netrequest()
+    except urllib2.URLError as e:
+        print time.strftime('%H:%M:%S') + ' ' + str(e.reason)
+        print time.strftime('%H:%M:%S') + ' ERROR: failed to connect with server'
+        raw_input('Press Enter to retry')
+        netrequest()
     raw = BeautifulSoup(web)
     def eventcheck(s):
         eventCheck = re.search('(?P<eventGroup1>.+?)時(?P<eventGroup2>.+?) --  ',s)
@@ -337,6 +349,8 @@ def netrequest():
 #function: datarequest(type)
 #type: sys/pre
 #request internet data of system and announced event and return a list
+    #unknown error after recruition from URLError and HTTPError
+    #UnboundLocalError: local variable 'content' referenced before assignment
 def datarequest(t):
     if t == 'sys':
         geturl = sysurl
@@ -363,12 +377,12 @@ def datarequest(t):
         print time.strftime('%H:%M:%S') + ' ERROR ' + str(e.code)
         print time.strftime('%H:%M:%S') + ' ERROR: failed to connect with server'
         raw_input('Press Enter to retry')
-        sysrequest(t)
+        datarequest(t)
     except urllib2.URLError as e:
         print time.strftime('%H:%M:%S') + ' ' + str(e.reason)
         print time.strftime('%H:%M:%S') + ' ERROR: failed to connect with server'
         raw_input('Press Enter to retry')
-        sysrequest(t)
+        datarequest(t)
     l = ListName()
     l.feed(content)
     lOut = l.name
@@ -377,7 +391,7 @@ def datarequest(t):
     else :
         print time.strftime('%H:%M:%S') + ' REQUEST ERROR: FAILED TO LOAD DATA FROM SERVER'
         raw_input('Press Enter to retry')
-        sysrequest(t)
+        datarequest(t)
 #=====================================================================
 #function localdata(type1,type2,list)
 #type1 :sys/raw/pre
@@ -567,15 +581,16 @@ def main(t):
             preData = mainpre[1]
             preTime = preData[0]
             prePrint = ['pre',preData]
-            questcheck(prePrint,'event')
+            if t == 'loop':
+                soundalert()
+            questcheck(prePrint,'get')
             ssInt = ( preTime.hour - now.hour)*3600 - (preTime.minute + now.minute) * 60 - now.second
             if ssInt > 1800:
                 print time.strftime('%H:%M:%S') + ' NOTIFY MESSAGE WILL BE RECIVED AT 30 MINNTES BEFORE EVENT START'
                 time.sleep(ssInt - 1800)
-                ticPlaysound = time.clock()
+                soundalert()
                 print time.strftime('%H:%M:%S') + ' ANNOUNCED EVENT WILL START AT ' + datetime.strftime(localtime(rawTime),'%H:%M')
-                tocPlaysound = time.clock()
-                ss = ( preTime.hour - now.hour + 1 ) *3600 - now.minute * 60 - now.second - (ticPlaysound - tocPlaysound)
+                ss = ( preTime.hour - now.hour + 1 ) *3600 - now.minute * 60 - now.second
             else :
                 ss = ssInt + 3600
                 print ''
@@ -584,16 +599,17 @@ def main(t):
             if mainraw[0] == 'newevent':
                 rawData = mainraw[1]
                 rawTime = rawData[0]
+                if t == 'loop':
+                    soundalert()
                 rawPrint = ['raw',rawData]
                 questcheck(rawPrint,'get')
                 ssInt = ( rawTime.hour - now.hour)*3600 - now.minute * 60 - now.second
                 if ssInt > 1800:
                     print time.strftime('%H:%M:%S') + ' NOTIFY MESSAGE WILL BE RECIVED AT 30 MINNTES BEFORE EVENT START'
                     time.sleep(ssInt - 1800)
-                    ticPlaysound = time.clock()
+                    soundalert()
                     print time.strftime('%H:%M:%S') + ' EVENT WILL START AT ' + datetime.strftime(localtime(rawTime),'%H:%M')
-                    tocPlaysound = time.clock()
-                    ss = ( rawTime.hour - now.hour + 1 ) *3600 - now.minute * 60 - now.second - (ticPlaysound - tocPlaysound)
+                    ss = ( rawTime.hour - now.hour + 1 ) *3600 - now.minute * 60 - now.second
                 else:
                     ss = ( ssInt + 3600)
                 print ''
