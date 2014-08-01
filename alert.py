@@ -269,19 +269,24 @@ def questcheck(s,t):
 #Check Event Function: eventcheck(s,t)
 #return list of information of urgent quest
 def netrequest():
-    try:
-        web = urllib2.urlopen(reqRaw)
-    except urllib2.HTTPError as e:
-        print time.strftime('%H:%M:%S') + ' ERROR ' + str(e.code)
-        print time.strftime('%H:%M:%S') + ' ERROR: failed to connect with server'
-        raw_input('Press Enter to retry')
-        netrequest()
-    except urllib2.URLError as e:
-        print time.strftime('%H:%M:%S') + ' ' + str(e.reason)
-        print time.strftime('%H:%M:%S') + ' ERROR: failed to connect with server'
-        raw_input('Press Enter to retry')
-        netrequest()
-    raw = BeautifulSoup(web)
+    while True:
+        try:
+            web = urllib2.urlopen(reqRaw)
+        except urllib2.HTTPError as e:
+            print time.strftime('%H:%M:%S') + ' ERROR ' + str(e.code)
+            print time.strftime('%H:%M:%S') + ' ERROR: failed to connect with server'
+            raw_input('Press Enter to retry')
+            continue
+        except urllib2.URLError as e:
+            print time.strftime('%H:%M:%S') + ' ' + str(e.reason)
+            print time.strftime('%H:%M:%S') + ' ERROR: failed to connect with server'
+            raw_input('Press Enter to retry')
+            continue
+        try:
+            raw = BeautifulSoup(web)
+        except BeautifulSoup.IncompleteRead :
+            continue
+        break
     def eventcheck(s):
         eventCheck = re.search('(?P<eventGroup1>.+?)時(?P<eventGroup2>.+?) --  ',s)
         if eventCheck :
@@ -349,8 +354,6 @@ def netrequest():
 #function: datarequest(type)
 #type: sys/pre
 #request internet data of system and announced event and return a list
-    #unknown error after recruition from URLError and HTTPError
-    #UnboundLocalError: local variable 'content' referenced before assignment
 def datarequest(t):
     if t == 'sys':
         geturl = sysurl
@@ -371,18 +374,20 @@ def datarequest(t):
         def handle_data(self, text):
             if self.is_li == 1:
                 self.name.append(text)
-    try:
-        content = urllib2.urlopen(geturl).read()
-    except urllib2.HTTPError as e:
-        print time.strftime('%H:%M:%S') + ' ERROR ' + str(e.code)
-        print time.strftime('%H:%M:%S') + ' ERROR: failed to connect with server'
-        raw_input('Press Enter to retry')
-        datarequest(t)
-    except urllib2.URLError as e:
-        print time.strftime('%H:%M:%S') + ' ' + str(e.reason)
-        print time.strftime('%H:%M:%S') + ' ERROR: failed to connect with server'
-        raw_input('Press Enter to retry')
-        datarequest(t)
+    while True:
+        try:
+            content = urllib2.urlopen(geturl).read()
+        except urllib2.HTTPError as e:
+            print time.strftime('%H:%M:%S') + ' ERROR ' + str(e.code)
+            print time.strftime('%H:%M:%S') + ' ERROR: failed to connect with server'
+            raw_input('Press Enter to retry')
+            continue
+        except urllib2.URLError as e:
+            print time.strftime('%H:%M:%S') + ' ' + str(e.reason)
+            print time.strftime('%H:%M:%S') + ' ERROR: failed to connect with server'
+            raw_input('Press Enter to retry')
+            continue
+        break
     l = ListName()
     l.feed(content)
     lOut = l.name
@@ -484,7 +489,7 @@ def pre():
             else:
                 preTime = datetime.strptime(str(l[0]),'%Y-%m-%d %H:%M')
                 preTimeNow = datetime.utcnow()
-                if preTime.month < preTimeNow.month or preTime.day < preTimeNow.day or (preTime.day == preTimeNow.day and preTime.hour < preTimeNow.hour):
+                if preTime.month < preTimeNow.month or (preTime.month == preTimeNow.month and preTime.day < preTimeNow.day ) or (preTime.day == preTimeNow.day and preTime.hour < preTimeNow.hour):
                     if l[1] == 'IR':
                         del l[0]
                         del l[0]
@@ -589,8 +594,8 @@ def main(t):
                 print time.strftime('%H:%M:%S') + ' NOTIFY MESSAGE WILL BE RECIVED AT 30 MINNTES BEFORE EVENT START'
                 time.sleep(ssInt - 1800)
                 soundalert()
-                print time.strftime('%H:%M:%S') + ' ANNOUNCED EVENT WILL START AT ' + datetime.strftime(localtime(rawTime),'%H:%M')
-                ss = ( preTime.hour - now.hour + 1 ) *3600 - now.minute * 60 - now.second
+                print time.strftime('%H:%M:%S') + ' ANNOUNCED EVENT WILL START AT ' + datetime.strftime(localtime(preTime),'%H:%M')
+                ss = 3600
             else :
                 ss = ssInt + 3600
                 print ''
@@ -609,7 +614,7 @@ def main(t):
                     time.sleep(ssInt - 1800)
                     soundalert()
                     print time.strftime('%H:%M:%S') + ' EVENT WILL START AT ' + datetime.strftime(localtime(rawTime),'%H:%M')
-                    ss = ( rawTime.hour - now.hour + 1 ) *3600 - now.minute * 60 - now.second
+                    ss = 3600
                 else:
                     ss = ( ssInt + 3600)
                 print ''
